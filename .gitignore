@@ -1,0 +1,6 @@
+# ignore secret API keys
+api/api_key.py
+
+# ignore compiled python code
+**.pyc
+**__pycache__**
