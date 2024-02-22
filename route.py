@@ -7,6 +7,7 @@
 
 
 # imports
+import json
 import numpy as np
 import pandas as pd
 import requests
@@ -55,16 +56,23 @@ def plot_route_coords(coords, route_coords=None, **kwargs):
     df_coords = pd.DataFrame({'node': np.arange(len(coords))})
     df_coords['lat'] = lat
     df_coords['lon'] = lon
+    df_coords['color'] = 'red'
+    df_coords['size'] = 1
     # put route in a dataframe
     lon = [float(coord['lon']) for coord in route_coords]
     lat = [float(coord['lat']) for coord in route_coords]
     df_route = pd.DataFrame({'node': np.arange(len(route_coords))})
     df_route['lat'] = lat
     df_route['lon'] = lon
+    df_route['color'] = 'blue'
     # plot the coordinates on map
-    fig1 = px.scatter_mapbox(df_coords, lat="lat", lon="lon",
+    fig1 = px.line_mapbox(df_route, lat="lat", lon="lon",
+             color='color', color_discrete_map='identity',
              zoom=8, height=600, width=900)
-    fig2 = px.scatter_mapbox(df_route, lat="lat", lon="lon",
+    fig2 = px.scatter_mapbox(df_coords, lat="lat", lon="lon",
+             hover_data={'size':False, 'lat':True, 'lon':True},
+             color='color', color_discrete_map='identity',
+             size='size', size_max=10,
              zoom=8, height=600, width=900)
     fig = go.Figure(data=fig1.data+fig2.data)
     fig.update_layout(mapbox_style="open-street-map")
@@ -79,7 +87,7 @@ if __name__=='__main__':
     p1 = {'lat': 51.048903, 'lon': 3.695139}
     p2 = {'lat': 51.046213, 'lon': 3.698381}
     p3 = {'lat': 51.052116, 'lon': 3.699504}
-    coords = [p1,p2]
+    coords = [p2, p1, p3]
 
     # make requests session
     session = requests.Session()

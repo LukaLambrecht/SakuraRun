@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import requests
 import plotly.express as px
+import plotly.graph_objects as go
 # import GraphHopper API key
 from api.api_key import API_KEY
 # local imports
@@ -54,11 +55,46 @@ def plot_distance_matrix(coords, distances=None, **kwargs):
     df_coords = pd.DataFrame({'node': np.arange(len(coords))})
     df_coords['lat'] = lat
     df_coords['lon'] = lon
-    # put connecting lines in a dataframe
-    # to do...
+    df_coords['color'] = 'red'
+    df_coords['size'] = 1
+    # put connecting lines in a list of dataframes
+    # note: differences between i,j and j,i are ignored for now
+    dfs = []
+    for i in range(distances.shape[0]):
+        for j in range(i+1,distances.shape[1]):
+            df = pd.DataFrame({'note': np.arange(2)})
+            df['lat'] = [lat[i], lat[j]]
+            df['lon'] = [lon[i], lon[j]]
+            dfs.append(df)
+    # make a dataframe with transparent points along the edges for displaying text
+    df_text = pd.DataFrame({'node': np.arange(len(dfs))})
+    mid_lat = []
+    mid_lon = []
+    mid_dist = []
+    for i in range(distances.shape[0]):
+        for j in range(i+1,distances.shape[1]):
+            mid_lat.append( (lat[i]+lat[j])/2. )
+            mid_lon.append( (lon[i]+lon[j])/2. )
+            mid_dist.append(distances[i,j])
+    df_text['lat'] = mid_lat
+    df_text['lon'] = mid_lon
+    df_text['size'] = 1
+    df_text['distance'] = mid_dist
     # plot the coordinates on map
-    fig = px.scatter_mapbox(df_coords, lat="lat", lon="lon",
-            zoom=8, height=600, width=900)
+    tempfig = px.scatter_mapbox(df_text, lat="lat", lon="lon",
+                hover_data={'distance': True, 'size':False, 'lat':False, 'lon':False},
+                size='size', size_max=10)
+    figdata = tempfig.data
+    for df in dfs:
+        tempfig = px.line_mapbox(df, lat="lat", lon="lon")
+        figdata += tempfig.data
+    tempfig = px.scatter_mapbox(df_coords, lat="lat", lon="lon",
+                hover_data={'size':False, 'color':False, 'lat':True, 'lon':True},
+                color='color', color_discrete_map='identity',
+                size='size', size_max=10,
+                zoom=8, height=600, width=900)
+    figdata += tempfig.data
+    fig = go.Figure(figdata)
     fig.update_layout(mapbox_style="open-street-map")
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
     fig.show()
