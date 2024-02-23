@@ -22,8 +22,8 @@ if __name__=='__main__':
     # make requests session
     session = requests.Session()
 
-    # get distances
+    # get route
     route_coords = route.get_route_coords(coords, session=session)[0]
 
-    # plot distances
+    # plot route
     route.plot_route_coords(coords, route_coords=route_coords)

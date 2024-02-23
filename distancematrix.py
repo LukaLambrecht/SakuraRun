@@ -34,10 +34,11 @@ def get_distance_matrix(coords, session=None, profile='foot'):
         'profile': profile,
         'points': points,
         'instructions': False,
-        'points_encoded': False
+        'points_encoded': False,
+        'out_arrays': ['distances']
     } 
     response = graphhopper_request(session, json, API_KEY, service='matrix')
-    distances = np.array(response['weights'])
+    distances = np.array(response['distances'])
     return distances
 
 def plot_distance_matrix(coords, distances=None, **kwargs):

@@ -1,6 +1,10 @@
 # ignore secret API keys
 api/api_key.py
 
+# ignore data files
+**.csv
+**.kml
+
 # ignore compiled python code
 **.pyc
 **__pycache__**
