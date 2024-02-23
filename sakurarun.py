@@ -29,11 +29,13 @@ if __name__=='__main__':
     parser.add_argument('-o', '--outputfile', default='sakurarun.kml', type=os.path.abspath)
     parser.add_argument('-p', '--profile', default='foot')
     parser.add_argument('-t', '--threshold', default=0.05, type=float)
+    parser.add_argument('--delimiter', default=',')
+    parser.add_argument('--pause', default=0, type=float)
     parser.add_argument('--doplot', default=False, action='store_true')
     args = parser.parse_args()
 
     # load input file
-    df = pd.read_csv(args.inputfile, delimiter=';')
+    df = pd.read_csv(args.inputfile, delimiter=args.delimiter)
     print('Read input file {} with {} entries.'.format(args.inputfile, len(df)))
 
     # get coordinates in suitable format
@@ -64,7 +66,13 @@ if __name__=='__main__':
                 msg += ' in cross-check with method "{}"'.format(method)
                 print(msg)
 
+    # wait for minutely quota to replenish
+    if args.pause>0:
+        print('Waiting for {}s...'.format(args.pause))
+        time.sleep(args.pause)
+
     # calculate route
+    print('Calculating route details...')
     (route_coords, route_info) = get_route_coords(coords, session=session, profile=args.profile)
     
     # print some info and make plot
