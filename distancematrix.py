@@ -98,23 +98,3 @@ def plot_distance_matrix(coords, distances=None, **kwargs):
     fig.update_layout(mapbox_style="open-street-map")
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
     fig.show()
-
-
-if __name__=='__main__':
-    # testing section
-
-    # define points
-    p1 = {'lat': 51.048903, 'lon': 3.695139}
-    p2 = {'lat': 51.046213, 'lon': 3.698381}
-    p3 = {'lat': 51.052116, 'lon': 3.699504}
-    coords = [p1,p2,p3]
-
-    # make requests session
-    session = requests.Session()
-
-    # get distances
-    distances = get_distance_matrix(coords, session=session)
-    print(distances)
-
-    # plot distances
-    plot_distance_matrix(coords, distances=distances)

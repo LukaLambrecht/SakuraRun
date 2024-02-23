@@ -78,22 +78,3 @@ def plot_route_coords(coords, route_coords=None, **kwargs):
     fig.update_layout(mapbox_style="open-street-map")
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
     fig.show()
-
-
-if __name__=='__main__':
-    # testing section
-
-    # define points
-    p1 = {'lat': 51.048903, 'lon': 3.695139}
-    p2 = {'lat': 51.046213, 'lon': 3.698381}
-    p3 = {'lat': 51.052116, 'lon': 3.699504}
-    coords = [p2, p1, p3]
-
-    # make requests session
-    session = requests.Session()
-
-    # get distances
-    route_coords = get_route_coords(coords, session=session)[0]
-
-    # plot distances
-    plot_route_coords(coords, route_coords=route_coords)
