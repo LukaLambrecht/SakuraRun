@@ -16,7 +16,7 @@ The remaining number of entries is about 240, shown below:
 
 ![](docs/filtered-entries.png)
 
-Unfortunately, this numbr is still too large for calculating a realistic distance matrix and applying a shortest-path algorithm.
+Unfortunately, this number is still too large for calculating a realistic distance matrix and applying a shortest-path algorithm.
 Hence we cluster the trees in the same street into a single entry, reducing their number to only 30:
 
 ![](docs/clustered-entries.png)

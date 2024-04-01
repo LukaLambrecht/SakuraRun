@@ -1,5 +1,6 @@
 # ignore secret API keys
 api/api_key.py
+api/api_key_old.py
 
 # ignore data files
 **.csv

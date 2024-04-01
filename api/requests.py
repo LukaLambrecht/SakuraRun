@@ -29,6 +29,7 @@ def graphhopper_request(session, json, key, service='route'):
     headers = graphhopper_headers()
     r = session.post(url, headers=headers, json=json)
     if r.status_code!=200:
-        msg = 'WARNING: request returned status code {}'.format(r.status_code)
+        msg = 'WARNING: request returned status code {}.'.format(r.status_code)
+        msg += ' Full response:\n{}'.format(r.json())
         print(msg)
     return r.json()

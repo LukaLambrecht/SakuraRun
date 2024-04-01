@@ -5,6 +5,8 @@
 
 # local imports
 import os
+import sys
+import time
 import numpy as np
 import pandas as pd
 import requests
@@ -25,7 +27,7 @@ if __name__=='__main__':
 
     # read command line arguments
     parser = argparse.ArgumentParser(description='Calculate optimal sakura run')
-    parser.add_argument('-i', '--inputfile', type=os.path.abspath)
+    parser.add_argument('-i', '--inputfile', required=True, type=os.path.abspath)
     parser.add_argument('-o', '--outputfile', default='sakurarun.kml', type=os.path.abspath)
     parser.add_argument('-p', '--profile', default='foot')
     parser.add_argument('-t', '--threshold', default=0.05, type=float)
@@ -54,7 +56,7 @@ if __name__=='__main__':
     (ids, dist) = solve_tsp(distances, method='local')
     coords = [coords[idx] for idx in ids]
     print('Shortest path: {:.3f} km'.format(dist/1000))
-    
+
     # cross-check with other heuristic methods
     check_methods = ['annealing']
     if args.threshold > 0:
