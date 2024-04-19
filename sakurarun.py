@@ -27,13 +27,23 @@ if __name__=='__main__':
 
     # read command line arguments
     parser = argparse.ArgumentParser(description='Calculate optimal sakura run')
-    parser.add_argument('-i', '--inputfile', required=True, type=os.path.abspath)
-    parser.add_argument('-o', '--outputfile', default='sakurarun.kml', type=os.path.abspath)
-    parser.add_argument('-p', '--profile', default='foot')
-    parser.add_argument('-t', '--threshold', default=0.05, type=float)
-    parser.add_argument('--delimiter', default=',')
-    parser.add_argument('--pause', default=0, type=float)
-    parser.add_argument('--doplot', default=False, action='store_true')
+    parser.add_argument('-i', '--inputfile', required=True, type=os.path.abspath,
+            help='Input .csv file with cluster locations.')
+    parser.add_argument('-o', '--outputfile', default='sakurarun.kml', type=os.path.abspath,
+            help='Output .kml file with route markers (default: "sakurarun.kml").')
+    parser.add_argument('-p', '--profile', default='foot',
+            help='Transportation profile (default: "foot").')
+    parser.add_argument('-t', '--threshold', default=0.05, type=float,
+            help='Relative difference threshold for method cross-checking (default: 0.05).')
+    parser.add_argument('--delimiter', default=',',
+            help='Delimiter for reading .csv file (default: ",")')
+    parser.add_argument('--pause', default=0, type=float,
+            help='Pause (in seconds) between api calls for quotum replenishing (default: 0).')
+    parser.add_argument('--free', default=False, action='store_true',
+            help='Make api calls compatible with a free GraphHopper account'
+                +' (much slower than default as limited quotums have to be respected).')
+    parser.add_argument('--doplot', default=False, action='store_true',
+            help='Make plots of distance matrix and final optimal route.')
     args = parser.parse_args()
 
     # load input file
@@ -48,7 +58,10 @@ if __name__=='__main__':
 
     # calculate distance matrix
     print('Calculating distance matrix...')
-    distances = get_distance_matrix(coords, session=session, profile=args.profile)
+    dmethod = 'full'
+    if args.free: dmethod = 'block'
+    distances = get_distance_matrix(coords,
+            session=session, profile=args.profile, method=dmethod)
     if args.doplot: plot_distance_matrix(coords, distances=distances)
 
     # optimization of route
@@ -75,7 +88,8 @@ if __name__=='__main__':
 
     # calculate route
     print('Calculating route details...')
-    (route_coords, route_info) = get_route_coords(coords, session=session, profile=args.profile)
+    (route_coords, route_info) = get_route_coords(coords,
+            session=session, profile=args.profile)
     
     # print some info and make plot
     print('Total distance: {:.3f} km'.format(route_info['distance']/1000))

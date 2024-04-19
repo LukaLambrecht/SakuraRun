@@ -7,6 +7,7 @@
 
 
 # imports
+import math
 import numpy as np
 import pandas as pd
 import requests
@@ -18,28 +19,95 @@ from api.api_key import API_KEY
 from api.requests import graphhopper_request
 
 
-def get_distance_matrix(coords, session=None, profile='foot'):
+def get_distance_matrix(coords, session=None, profile='foot', method='full',
+        to_coords=None):
     # get the distance matrix between a set of coordinates
     # input arguments:
     # - coords: list of coordinates, formatted as {'lon': longitude, 'lat': latitude}
     # - session: requests.Session object (if None, a new one is created)
     # - profile: mode of transport, choose from 'car', 'bike' or 'foot'
+    # - method: choose from "full", "block" or "single"
+    #   - "full": make a single api call for the full matrix of points
+    #     (with a free GraphHopper account this method is limited to 5 points)
+    #   - "block": split the api call in blocks of points
+    #     (works with a free GraphHoper account but can be slow; experimental)
+    #   - "single": make a separate api call for each pair of points
+    #     (works with a free GraphHopper account but is very slow,
+    #     especially since frequent pauses are needed to replenish the minutely quotum)
+    # - to_coords: currently only for internal use, do not call.
     # returns:
     #   numpy array with distances in meter;
     #   d[i,j] gives the distances between the i'th point as source
     #   and the j'th point as destination
     if session is None: session = requests.Session()
-    points = [[el['lon'], el['lat']] for el in coords]
-    json = {
-        'profile': profile,
-        'points': points,
-        'instructions': False,
-        'points_encoded': False,
-        'out_arrays': ['distances']
-    } 
-    response = graphhopper_request(session, json, API_KEY, service='matrix')
-    distances = np.array(response['distances'])
-    return distances
+    if method=='single':
+        # initialize output array
+        distances = np.zeros((len(coords),len(coords)))
+        # loop over pairs of points
+        npairs = int(len(coords)*(len(coords)-1)/2)
+        counter = 0
+        for i in range(len(coords)):
+            for j in range(i+1, len(coords)):
+                # print counter
+                counter += 1
+                msg =''
+                if counter>1: msg += '\033[F'
+                msg += 'Calculating distance matrix pair {} of {}...'.format(counter,npairs)
+                print(msg)
+                # find pair of coordinates
+                thiscoords = [coords[i], coords[j]]
+                # calculate distance between two points
+                temp = get_distance_matrix(thiscoords,
+                        session=session, profile=profile, method='full')
+                distances[i,j] = temp[0,1]
+                distances[j,i] = temp[1,0]
+        return distances
+    elif method=="block":
+        # initialize output array
+        distances = np.zeros((len(coords),len(coords)))
+        # loop over pairs of blocks
+        blocksize = 5
+        nblocks1d = math.ceil(len(coords)/blocksize)
+        nblocks = int(nblocks1d*(nblocks1d+1)/2)
+        counter = 0
+        for i in range(0, len(coords), blocksize):
+            for j in range(i, len(coords), blocksize):
+                # print counter
+                counter += 1
+                msg =''
+                if counter>1: msg += '\033[F'
+                msg += 'Calculating distance matrix block {} of {}...'.format(counter,nblocks)
+                print(msg)
+                # get block coordinates
+                from_coords = coords[i:i+blocksize]
+                to_coords = coords[j:j+blocksize]
+                # calculate distance between blocks of points
+                temp = get_distance_matrix(from_coords,
+                        session=session, profile=profile, method='full',
+                        to_coords=to_coords)
+                distances[i:i+blocksize,j:j+blocksize] = temp
+                distances[j:j+blocksize,i:i+blocksize] = temp.transpose()
+        return distances
+    elif method=='full':
+        points = [[el['lon'], el['lat']] for el in coords]
+        json = {
+          'profile': profile,
+          'points': points,
+          'instructions': False,
+          'points_encoded': False,
+          'out_arrays': ['distances']
+        }
+        if to_coords is not None:
+            to_points = [[el['lon'], el['lat']] for el in to_coords]
+            json.pop('points')
+            json['from_points'] = points
+            json['to_points'] = to_points
+        response = graphhopper_request(session, json, API_KEY, service='matrix')
+        distances = np.array(response['distances'])
+        return distances
+    else:
+        msg = 'ERROR: method "{}" not recognized.'.format(method)
+        raise Exception(msg)
 
 def plot_distance_matrix(coords, distances=None, **kwargs):
     # make a visual representation of the distance matrix
