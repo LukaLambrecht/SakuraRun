@@ -8,6 +8,7 @@
 
 # imports
 import json
+import math
 import numpy as np
 import pandas as pd
 import requests
@@ -19,28 +20,54 @@ from api.api_key import API_KEY
 from api.requests import graphhopper_request
 
 
-def get_route_coords(coords, session=None, profile='foot'):
+def get_route_coords(coords, session=None, profile='foot', chunksize=None):
     # get the route between a set of coordinates
     # input arguments:
     # - coords: list of coordinates, formatted as {'lon': longitude, 'lat': latitude}
     # - session: requests.Session object (if None, a new one is created)
     # - profile: mode of transport, choose from 'car', 'bike' or 'foot'
+    # - chunksize: number of coordinates to put in one chunk, i.e. one API call
+    #   (default: do not split in chunks, make one API call for the full coords list)
+    #   (use chunksize = 5 or lower to be compatible with a free GraphHopper account)
     # returns:
     #   list of coordinates in same format as input
     if session is None: session = requests.Session()
-    points = [[el['lon'], el['lat']] for el in coords]
-    json = {
-        'profile': profile,
-        'points': points,
-        'instructions': False,
-        'points_encoded': False
-    } 
-    response = graphhopper_request(session, json, API_KEY, service='route')
-    points = np.array(response['paths'][0]['points']['coordinates'])
-    coords = [{'lon': el[0], 'lat': el[1]} for el in points]
-    distance = response['paths'][0]['distance']
-    info = {'distance': distance}
-    return (coords, info)
+    if( chunksize is not None and len(coords)>chunksize ):
+        chunksize = int(chunksize)-1
+        nchunks = int(math.ceil((len(coords)-1)/chunksize))
+        # (note: -1 is because chunks must be overlapping by one point)
+        routecoords = []
+        routeinfo = {'distance': 0.}
+        counter = 0
+        for i in range(0, len(coords)-1, chunksize):
+            # print counter
+            counter += 1
+            msg =''
+            if counter>1: msg += '\033[F'
+            msg += 'Calculating route chunk {} of {}...'.format(counter,nchunks)
+            print(msg)
+            # make chunk and calculate route for this chunk
+            chunk = coords[i:i+chunksize+1]
+            chunkcoords, chunkinfo = get_route_coords(chunk,
+                    session=session, profile=profile)
+            # aggregate results
+            routecoords += chunkcoords
+            routeinfo['distance'] += chunkinfo['distance']
+        return (routecoords, routeinfo)
+    else:
+        points = [[el['lon'], el['lat']] for el in coords]
+        json = {
+          'profile': profile,
+          'points': points,
+          'instructions': False,
+          'points_encoded': False
+        } 
+        response = graphhopper_request(session, json, API_KEY, service='route')
+        points = np.array(response['paths'][0]['points']['coordinates'])
+        coords = [{'lon': el[0], 'lat': el[1]} for el in points]
+        distance = response['paths'][0]['distance']
+        info = {'distance': distance}
+        return (coords, info)
 
 def plot_route_coords(coords, route_coords=None, **kwargs):
     # make a visual representation of the route

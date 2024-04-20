@@ -19,19 +19,19 @@ from api.api_key import API_KEY
 from api.requests import graphhopper_request
 
 
-def get_distance_matrix(coords, session=None, profile='foot', method='full',
+def get_distance_matrix(coords, session=None, profile='foot', blocksize=None,
         to_coords=None):
     # get the distance matrix between a set of coordinates
     # input arguments:
     # - coords: list of coordinates, formatted as {'lon': longitude, 'lat': latitude}
     # - session: requests.Session object (if None, a new one is created)
     # - profile: mode of transport, choose from 'car', 'bike' or 'foot'
-    # - method: choose from "full", "block" or "single"
-    #   - "full": make a single api call for the full matrix of points
-    #     (with a free GraphHopper account this method is limited to 5 points)
-    #   - "block": split the api call in blocks of points
-    #     (works with a free GraphHoper account but can be slow; experimental)
-    #   - "single": make a separate api call for each pair of points
+    # - blocksize: specify the splitting of the API calls
+    #   - None (default): make a single API call for the full matrix of points
+    #     (with a free GraphHopper account, this method is limited to 5 points)
+    #   - integer n > 2 and < len(coords): split the API call in blocks of n points
+    #     (works with a free GraphHoper account if n <= 5, but can be slow)
+    #   - 2: make a separate api call for each pair of points
     #     (works with a free GraphHopper account but is very slow,
     #     especially since frequent pauses are needed to replenish the minutely quotum)
     # - to_coords: currently only for internal use, do not call.
@@ -40,7 +40,7 @@ def get_distance_matrix(coords, session=None, profile='foot', method='full',
     #   d[i,j] gives the distances between the i'th point as source
     #   and the j'th point as destination
     if session is None: session = requests.Session()
-    if method=='single':
+    if( isinstance(blocksize,int) and blocksize==2 ):
         # initialize output array
         distances = np.zeros((len(coords),len(coords)))
         # loop over pairs of points
@@ -58,15 +58,14 @@ def get_distance_matrix(coords, session=None, profile='foot', method='full',
                 thiscoords = [coords[i], coords[j]]
                 # calculate distance between two points
                 temp = get_distance_matrix(thiscoords,
-                        session=session, profile=profile, method='full')
+                        session=session, profile=profile)
                 distances[i,j] = temp[0,1]
                 distances[j,i] = temp[1,0]
         return distances
-    elif method=="block":
+    elif( isinstance(blocksize,int) and blocksize>2 and blocksize<len(coords) ):
         # initialize output array
         distances = np.zeros((len(coords),len(coords)))
         # loop over pairs of blocks
-        blocksize = 5
         nblocks1d = math.ceil(len(coords)/blocksize)
         nblocks = int(nblocks1d*(nblocks1d+1)/2)
         counter = 0
@@ -83,12 +82,12 @@ def get_distance_matrix(coords, session=None, profile='foot', method='full',
                 to_coords = coords[j:j+blocksize]
                 # calculate distance between blocks of points
                 temp = get_distance_matrix(from_coords,
-                        session=session, profile=profile, method='full',
+                        session=session, profile=profile,
                         to_coords=to_coords)
                 distances[i:i+blocksize,j:j+blocksize] = temp
                 distances[j:j+blocksize,i:i+blocksize] = temp.transpose()
         return distances
-    elif method=='full':
+    elif( blocksize is None ):
         points = [[el['lon'], el['lat']] for el in coords]
         json = {
           'profile': profile,
@@ -106,7 +105,8 @@ def get_distance_matrix(coords, session=None, profile='foot', method='full',
         distances = np.array(response['distances'])
         return distances
     else:
-        msg = 'ERROR: method "{}" not recognized.'.format(method)
+        msg = 'ERROR: blocksize {} (type {}) not recognized;'.format(blocksize, type(blocksize))
+        msg += ' must be an integer between 2 and {} or None.'.format(len(coords))
         raise Exception(msg)
 
 def plot_distance_matrix(coords, distances=None, **kwargs):

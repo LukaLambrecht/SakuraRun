@@ -6,7 +6,6 @@
 # local imports
 import os
 import sys
-import time
 import numpy as np
 import pandas as pd
 import requests
@@ -37,14 +36,23 @@ if __name__=='__main__':
             help='Relative difference threshold for method cross-checking (default: 0.05).')
     parser.add_argument('--delimiter', default=',',
             help='Delimiter for reading .csv file (default: ",")')
-    parser.add_argument('--pause', default=0, type=float,
-            help='Pause (in seconds) between api calls for quotum replenishing (default: 0).')
-    parser.add_argument('--free', default=False, action='store_true',
-            help='Make api calls compatible with a free GraphHopper account'
-                +' (much slower than default as limited quotums have to be respected).')
+    parser.add_argument('--blocksize', default=None,
+            help='Block size for distance matrix calculation, must be None'
+                +' or an integer between 2 and the number of points in the input file;'
+                +' use a value <= 5 for compatibility with a free GraphHopper account.')
+    parser.add_argument('--chunksize', default=None,
+            help='Chunk size for route calculation, must be None'
+                +' or an integer between 2 and the number of points in the input file;'
+                +' use a value <= 5 for compatibility with a free GraphHopper account.')
     parser.add_argument('--doplot', default=False, action='store_true',
             help='Make plots of distance matrix and final optimal route.')
     args = parser.parse_args()
+
+    # format blocksize argument
+    if args.blocksize is not None: args.blocksize = int(args.blocksize)
+
+    # format chunksize argument
+    if args.chunksize is not None: args.chunksize = int(args.chunksize)
 
     # load input file
     df = pd.read_csv(args.inputfile, delimiter=args.delimiter)
@@ -58,10 +66,8 @@ if __name__=='__main__':
 
     # calculate distance matrix
     print('Calculating distance matrix...')
-    dmethod = 'full'
-    if args.free: dmethod = 'block'
     distances = get_distance_matrix(coords,
-            session=session, profile=args.profile, method=dmethod)
+            session=session, profile=args.profile, blocksize=args.blocksize)
     if args.doplot: plot_distance_matrix(coords, distances=distances)
 
     # optimization of route
@@ -81,15 +87,10 @@ if __name__=='__main__':
                 msg += ' in cross-check with method "{}"'.format(method)
                 print(msg)
 
-    # wait for minutely quota to replenish
-    if args.pause>0:
-        print('Waiting for {}s...'.format(args.pause))
-        time.sleep(args.pause)
-
     # calculate route
     print('Calculating route details...')
     (route_coords, route_info) = get_route_coords(coords,
-            session=session, profile=args.profile)
+            session=session, profile=args.profile, chunksize=args.chunksize)
     
     # print some info and make plot
     print('Total distance: {:.3f} km'.format(route_info['distance']/1000))
