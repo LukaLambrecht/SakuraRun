@@ -1,6 +1,6 @@
 # Calculate the optimal path for a sakura appreciation run
 
-The blossoming of the Japanese cherry flower (Jap. sakura, Lat. Prunus serrulata) is quite a sight to behold.
+The blossoming of the Japanese cherry flower (Jap. *sakura*, Lat. *Prunus serrulata*) is quite a sight to behold.
 In fact, it is so beautiful that we wanted to see *all* of them. 
 And though we're always in for a good run, there's *many* cherry trees in and around the city of Ghent... 
 So how do we go about this? SakuraRun to the rescue!
