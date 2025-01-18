@@ -17,10 +17,10 @@ def solve_tsp(distances, method='exact'):
 	elif method=='local':
 	    shortest_path_inds, shortest_path_dist = solve_tsp_local_search(distances)
 	elif method=='annealing':
-		shortest_path_inds, shortest_path_dist = solve_tsp_simulated_annealing(distances)
+	    shortest_path_inds, shortest_path_dist = solve_tsp_simulated_annealing(distances)
 	else:
-		msg = 'Method "{}" not recognized.'.format(method)
-		raise Exception(msg)
+	    msg = 'Method "{}" not recognized.'.format(method)
+	    raise Exception(msg)
 	# add the first index to the end to make the closed loop explicit
 	shortest_path_inds = shortest_path_inds + [shortest_path_inds[0]]
 	return (shortest_path_inds, shortest_path_dist)
