@@ -27,7 +27,11 @@ from api.api_key import API_KEY
 from api.requests import graphhopper_request
 
 
-def get_distance_matrix(coords, session=None, profile='foot', blocksize=None,
+def get_distance_matrix(coords,
+        session=None,
+        profile='foot',
+        blocksize=None,
+        geodesic=False,
         to_coords=None):
     # get the distance matrix between a set of coordinates
     # input arguments:
@@ -42,11 +46,19 @@ def get_distance_matrix(coords, session=None, profile='foot', blocksize=None,
     #   - 2: make a separate api call for each pair of points
     #     (works with a free GraphHopper account but is very slow,
     #     especially since frequent pauses are needed to replenish the minutely quotum)
+    # - geodesic: get simple geodesic distance matrix.
+    #   this is a lot faster for large coordinate collections
+    #   and does not use GraphHopper, but might be inaccurate (e.g. crossing rivers).
     # - to_coords: currently only for internal use, do not call.
     # returns:
     #   numpy array with distances in meter;
     #   d[i,j] gives the distances between the i'th point as source
     #   and the j'th point as destination
+
+    # first handle case of geodesic distance matrix
+    # (does not need a request session)
+    if geodesic: return get_geodesic_distance_matrix(coords)
+
     if session is None: session = requests.Session()
     
     if( isinstance(blocksize,int) and blocksize==2 ):
@@ -120,6 +132,30 @@ def get_distance_matrix(coords, session=None, profile='foot', blocksize=None,
         msg = 'ERROR: blocksize {} (type {}) not recognized;'.format(blocksize, type(blocksize))
         msg += ' must be an integer between 2 and {} or None.'.format(len(coords))
         raise Exception(msg)
+
+
+def get_geodesic_distance_matrix(coords):
+    # get simple geodesic distance matrix
+    def distance(lat1, lon1, lat2, lon2):
+        r = 6371000 # (in meter)
+        p = math.pi / 180.
+        a = ( 0.5 - math.cos((lat2-lat1)*p)/2.
+              + math.cos(lat1*p) * math.cos(lat2*p) * (1-math.cos((lon2-lon1)*p))/2. )
+        return 2 * r * math.asin(math.sqrt(a))
+    size = len(coords)
+    distances = np.zeros((size, size))
+    ncalls = int(size*(size-1)/2)
+    counter = 0
+    for idx1 in range(size):
+        for idx2 in range(idx1+1, size):
+            dist = distance(coords[idx1]['lat'], coords[idx2]['lon'], coords[idx2]['lat'], coords[idx2]['lon'])
+            distances[idx1, idx2] = dist
+            distances[idx2, idx1] = dist
+            counter += 1
+            completion = 100*float(counter)/ncalls
+            print('Calculating distance matrix: {:.2f}%'.format(completion), end='\r')
+    print('Calculating distance matrix: {:.2f}%'.format(completion))
+    return distances
 
 
 def plot_distance_matrix(coords, distances=None, **kwargs):

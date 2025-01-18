@@ -51,6 +51,8 @@ if __name__=='__main__':
             help='Block size for distance matrix calculation, must be None'
                 +' or an integer between 2 and the number of points in the input file;'
                 +' use a value <= 5 for compatibility with a free GraphHopper account.')
+    parser.add_argument('--geodesic_distance_matrix', default=False, action='store_true',
+            help='Use a simple geodesic distance matrix instead of a fully accurate one.')
     parser.add_argument('--chunksize', default=None,
             help='Chunk size for route calculation, must be None'
                 +' or an integer between 2 and the number of points in the input file;'
@@ -79,15 +81,22 @@ if __name__=='__main__':
 
     # calculate distance matrix
     print('Calculating distance matrix...')
+    sys.stdout.flush()
     distances = get_distance_matrix(coords,
-            session=session, profile=args.profile, blocksize=args.blocksize)
-    if args.doplot: plot_distance_matrix(coords, distances=distances)
+            session=session, profile=args.profile, blocksize=args.blocksize,
+            geodesic=args.geodesic_distance_matrix)
+    if args.doplot:
+        print('Plotting distance matrix...')
+        sys.stdout.flush()
+        plot_distance_matrix(coords, distances=distances)
 
     # optimization of route
     print('Finding shortest path...')
+    sys.stdout.flush()
     (ids, dist) = solve_tsp(distances, method='local')
     coords = [coords[idx] for idx in ids]
     print('Shortest path: {:.3f} km'.format(dist/1000))
+    sys.stdout.flush()
 
     # cross-check with other heuristic methods
     check_methods = ['annealing']
@@ -99,6 +108,8 @@ if __name__=='__main__':
                 msg = 'WARNING: found more than {}% deviation'.format(args.threshold*100)
                 msg += ' in cross-check with method "{}"'.format(method)
                 print(msg)
+
+    sys.exit()
 
     # calculate route
     print('Calculating route details...')
