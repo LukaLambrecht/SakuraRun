@@ -57,6 +57,7 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--inputfile', required=True, type=os.path.abspath)
     parser.add_argument('-o', '--outputfile', default=None)
+    parser.add_argument('--delimiter', default=',')
     parser.add_argument('--treetype_key', default=None)
     parser.add_argument('--print_treetypes', default=False, action='store_true')
     parser.add_argument('--treetype_filter', default=None)
@@ -88,7 +89,7 @@ if __name__=='__main__':
         print(location_filter)
 
     # load input file
-    dataset = pd.read_csv(args.inputfile, sep=';')
+    dataset = pd.read_csv(args.inputfile, sep=args.delimiter)
     print('Loaded dataset {}'.format(args.inputfile))
     print('Number of entries: {}'.format(len(dataset)))
     #print('Dataset head:')
@@ -127,4 +128,4 @@ if __name__=='__main__':
         print('Number of entries after location filter: {}'.format(len(dataset)))
     
     # write filtered dataset
-    if args.outputfile is not None: dataset.to_csv(args.outputfile, sep=',')
+    if args.outputfile is not None: dataset.to_csv(args.outputfile, sep=args.delimiter)

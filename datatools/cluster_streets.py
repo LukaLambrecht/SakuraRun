@@ -52,6 +52,7 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--inputfile', required=True, type=os.path.abspath)
     parser.add_argument('-o', '--outputfile', default=None)
+    parser.add_argument('--delimiter', default=',')
     parser.add_argument('--street_key', default='street')
     parser.add_argument('--lat_key', default='lat')
     parser.add_argument('--lon_key', default='lon')
@@ -61,7 +62,7 @@ if __name__=='__main__':
     for arg in vars(args): print(f'  - {arg}: {getattr(args, arg)}')
 
     # load input file
-    dataset = pd.read_csv(args.inputfile, sep=',')
+    dataset = pd.read_csv(args.inputfile, sep=args.delimiter)
     print('Loaded dataset {}'.format(args.inputfile))
     print('Number of entries: {}'.format(len(dataset)))
     #print('Dataset head:')
@@ -80,4 +81,4 @@ if __name__=='__main__':
 
     # write output file
     if args.outputfile is not None:
-        centers.to_csv(args.outputfile, sep=',')
+        centers.to_csv(args.outputfile, sep=args.delimiter)

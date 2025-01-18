@@ -14,23 +14,18 @@ if __name__=='__main__':
     # settings
     thisdir = os.path.dirname(os.path.abspath(__file__))
     datatoolsdir = os.path.abspath(os.path.join(thisdir, '../../datatools'))
-    inputfile = os.path.abspath(os.path.join(thisdir, 'raw/locaties-bomen-gent-full.csv'))
-    outputfile = 'data-gent-{}.csv'
-    treetype_key = 'sortiment'
+    inputfile = os.path.abspath(os.path.join(thisdir, 'raw/Providence_Tree_Inventory_20250118.csv'))
+    outputfile = 'data-providence-{}.csv'
+    treetype_key = 'Species'
     treetype_filter = os.path.abspath(os.path.join(thisdir, 'filters/treetype_filter.json'))
-    location_key = 'onderhoudsgebied'
-    location_filter = os.path.abspath(os.path.join(thisdir, 'filters/location_filter.json'))
 
     # filter
     filtered = 'temp-1.csv'
     cmd = 'python3 ' + os.path.join(datatoolsdir, 'filter.py')
     cmd += f' -i {inputfile}'
     cmd += f' -o {filtered}'
-    cmd += ' --delimiter \';\''
     cmd += f' --treetype_key {treetype_key}'
     cmd += f' --treetype_filter {treetype_filter}'
-    cmd += f' --location_key {location_key}'
-    cmd += f' --location_filter {location_filter}'
     os.system(cmd)
 
     # parse
@@ -40,10 +35,19 @@ if __name__=='__main__':
     cmd += f' -o {parsed}'
     os.system(cmd)
 
-    # cluster
-    clustered = 'temp-3.csv'
-    cmd = 'python3 ' + os.path.join(datatoolsdir, 'cluster_streets.py')
+    # select square
+    selected = 'temp-3.csv'
+    cmd = 'python3 ' + os.path.join(datatoolsdir, 'select_square.py')
     cmd += f' -i {parsed}'
+    cmd += f' -o {selected}'
+    cmd += ' --lat_min {}'.format(41.813)
+    cmd += ' --lon_min {}'.format(-71.408)
+    os.system(cmd)
+
+    # cluster
+    clustered = 'temp-4.csv'
+    cmd = 'python3 ' + os.path.join(datatoolsdir, 'cluster_streets.py')
+    cmd += f' -i {selected}'
     cmd += f' -o {clustered}'
     os.system(cmd)
 
@@ -57,5 +61,5 @@ if __name__=='__main__':
 
     # output handling
     os.system(f'cp {clustered} {outputfile.format("processed")}')
-    os.system(f'cp {parsed} {outputfile.format("filtered")}')
+    os.system(f'cp {selected} {outputfile.format("filtered-selected")}')
     os.system('rm *temp*.csv')

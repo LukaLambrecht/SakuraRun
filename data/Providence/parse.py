@@ -21,7 +21,7 @@ if __name__=='__main__':
     for arg in vars(args): print(f'  - {arg}: {getattr(args, arg)}')
 
     # load input file
-    dataset = pd.read_csv(args.inputfile, sep=';')
+    dataset = pd.read_csv(args.inputfile, sep=',')
     print('Loaded dataset {}'.format(args.inputfile))
     print('Number of entries: {}'.format(len(dataset)))
     #print('Dataset head:')
@@ -31,22 +31,35 @@ if __name__=='__main__':
 
     # rename columns
     rename = {
-      'sortiment': 'treetype',
-      'straatnaam': 'street',
-      'onderhoudsgebied': 'area'
+      'Species': 'treetype',
+      'On Street': 'street',
     }
     dataset.rename(columns=rename, inplace=True)
 
-    # write tree coordinates in a more conventional notation
-    geo_points = dataset['geo_point_2d']
+    # get the coordinates
+    addresses = dataset['Property Address']
     lats = np.zeros(len(dataset))
     lons = np.zeros(len(dataset))
-    for idx, geo_point in enumerate(geo_points):
-        temp = geo_point.split(',')
-        lat = float(temp[0])
-        lon = float(temp[1])
+    nwarnings = 0
+    for idx, address in enumerate(addresses):
+        try:
+            temp = address.split('(')[1].strip(' \n\t()')
+            temp = temp.split(',')
+            lat = float(temp[0].strip(' '))
+            lon = float(temp[1].strip(' '))
+        except:
+            msg = 'WARNING: could not parse the coordinates'
+            msg += f' for address "{address}".'
+            print(msg)
+            # do do: use graphhopper api to find coordinates
+            nwarnings += 1
+            lat = None
+            lon = None
         lats[idx] = lat
         lons[idx] = lon
+    msg = 'WARNING: could not parse the coordinates'
+    msg += f' for {nwarnings} out of {len(dataset)} entries.'
+    print(msg)
     dataset['lat'] = lats
     dataset['lon'] = lons
 
