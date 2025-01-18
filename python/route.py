@@ -6,7 +6,9 @@
 # more specifically here: https://docs.graphhopper.com/#operation/postRoute
 
 
-# imports
+# external imports
+import os
+import sys
 import json
 import math
 import numpy as np
@@ -14,8 +16,14 @@ import pandas as pd
 import requests
 import plotly.express as px
 import plotly.graph_objects as go
+
+# set path for local imports
+thisdir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.abspath(os.path.join(thisdir, '..')))
+
 # import GraphHopper API key
 from api.api_key import API_KEY
+
 # local imports
 from api.requests import graphhopper_request
 
@@ -32,6 +40,7 @@ def get_route_coords(coords, session=None, profile='foot', chunksize=None):
     # returns:
     #   list of coordinates in same format as input
     if session is None: session = requests.Session()
+    
     if( chunksize is not None and len(coords)>chunksize ):
         chunksize = int(chunksize)-1
         nchunks = int(math.ceil((len(coords)-1)/chunksize))
@@ -54,6 +63,7 @@ def get_route_coords(coords, session=None, profile='foot', chunksize=None):
             routecoords += chunkcoords
             routeinfo['distance'] += chunkinfo['distance']
         return (routecoords, routeinfo)
+    
     else:
         points = [[el['lon'], el['lat']] for el in coords]
         json = {
@@ -68,6 +78,7 @@ def get_route_coords(coords, session=None, profile='foot', chunksize=None):
         distance = response['paths'][0]['distance']
         info = {'distance': distance}
         return (coords, info)
+
 
 def plot_route_coords(coords, route_coords=None, **kwargs):
     # make a visual representation of the route

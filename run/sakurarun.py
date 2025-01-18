@@ -1,23 +1,30 @@
+#!/usr/bin/env python3
+
 ##################################################
 # Main script calculating the optimal sakura run #
 ##################################################
 
 
-# local imports
+# external imports
 import os
 import sys
 import numpy as np
 import pandas as pd
 import requests
 import argparse
+
+# set path for local imports
+thisdir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.abspath(os.path.join(thisdir, '..')))
+
 # import GraphHopper API key
 from api.api_key import API_KEY
+
 # local imports
-from distancematrix import get_distance_matrix
-from distancematrix import plot_distance_matrix
-from route import get_route_coords
-from route import plot_route_coords
-from tools.coordtools import df_to_coords
+from python.distancematrix import get_distance_matrix
+from python.distancematrix import plot_distance_matrix
+from python.route import get_route_coords
+from python.route import plot_route_coords
 from tools.kmltools import coords_to_kml
 from tools.tsptools import solve_tsp
 
@@ -36,6 +43,10 @@ if __name__=='__main__':
             help='Relative difference threshold for method cross-checking (default: 0.05).')
     parser.add_argument('--delimiter', default=',',
             help='Delimiter for reading .csv file (default: ",")')
+    parser.add_argument('--lat_key', default='lat',
+            help='Name of the column with latitude values in input .csv file (default: "lat").')
+    parser.add_argument('--lon_key', default='lon',
+            help='Name of the column with longitude values in input .csv file (default: "lon").')
     parser.add_argument('--blocksize', default=None,
             help='Block size for distance matrix calculation, must be None'
                 +' or an integer between 2 and the number of points in the input file;'
@@ -59,7 +70,9 @@ if __name__=='__main__':
     print('Read input file {} with {} entries.'.format(args.inputfile, len(df)))
 
     # get coordinates in suitable format
-    coords = df_to_coords(df)
+    lats = df[args.lat_key].astype(float)
+    lons = df[args.lon_key].astype(float)
+    coords = [{'lon': lon, 'lat': lat} for lon, lat in zip(lons, lats)]
 
     # make requests session
     session = requests.Session()

@@ -6,15 +6,23 @@
 # more specifically here: https://docs.graphhopper.com/#operation/postMatrix
 
 
-# imports
+# external imports
+import os
+import sys
 import math
 import numpy as np
 import pandas as pd
 import requests
 import plotly.express as px
 import plotly.graph_objects as go
+
+# set path for local imports
+thisdir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.abspath(os.path.join(thisdir, '..')))
+
 # import GraphHopper API key
 from api.api_key import API_KEY
+
 # local imports
 from api.requests import graphhopper_request
 
@@ -40,6 +48,7 @@ def get_distance_matrix(coords, session=None, profile='foot', blocksize=None,
     #   d[i,j] gives the distances between the i'th point as source
     #   and the j'th point as destination
     if session is None: session = requests.Session()
+    
     if( isinstance(blocksize,int) and blocksize==2 ):
         # initialize output array
         distances = np.zeros((len(coords),len(coords)))
@@ -62,6 +71,7 @@ def get_distance_matrix(coords, session=None, profile='foot', blocksize=None,
                 distances[i,j] = temp[0,1]
                 distances[j,i] = temp[1,0]
         return distances
+    
     elif( isinstance(blocksize,int) and blocksize>2 and blocksize<len(coords) ):
         # initialize output array
         distances = np.zeros((len(coords),len(coords)))
@@ -87,6 +97,7 @@ def get_distance_matrix(coords, session=None, profile='foot', blocksize=None,
                 distances[i:i+blocksize,j:j+blocksize] = temp
                 distances[j:j+blocksize,i:i+blocksize] = temp.transpose()
         return distances
+    
     elif( blocksize is None ):
         points = [[el['lon'], el['lat']] for el in coords]
         json = {
@@ -104,10 +115,12 @@ def get_distance_matrix(coords, session=None, profile='foot', blocksize=None,
         response = graphhopper_request(session, json, API_KEY, service='matrix')
         distances = np.array(response['distances'])
         return distances
+    
     else:
         msg = 'ERROR: blocksize {} (type {}) not recognized;'.format(blocksize, type(blocksize))
         msg += ' must be an integer between 2 and {} or None.'.format(len(coords))
         raise Exception(msg)
+
 
 def plot_distance_matrix(coords, distances=None, **kwargs):
     # make a visual representation of the distance matrix
