@@ -25,6 +25,7 @@ from api.api_key import API_KEY
 
 # local imports
 from api.requests import graphhopper_request
+from tools.distance import haversine
 from python.kmeans import cluster_kmeans
 
 
@@ -160,28 +161,23 @@ def get_distance_matrix(coords,
         raise Exception(msg)
 
 
-def get_geodesic_distance_matrix(coords):
+def get_geodesic_distance_matrix(coords, verbose=True):
     # get simple geodesic distance matrix
-    def distance(lat1, lon1, lat2, lon2):
-        # haversine formula
-        r = 6371000 # (in meter)
-        p = math.pi / 180.
-        a = ( 0.5 - math.cos((lat2-lat1)*p)/2.
-              + math.cos(lat1*p) * math.cos(lat2*p) * (1-math.cos((lon2-lon1)*p))/2. )
-        return 2 * r * math.asin(math.sqrt(a))
     size = len(coords)
     distances = np.zeros((size, size))
+    if size == 1: return distances
     ncalls = int(size*(size-1)/2)
     counter = 0
     for idx1 in range(size):
         for idx2 in range(idx1+1, size):
-            dist = distance(coords[idx1]['lat'], coords[idx1]['lon'], coords[idx2]['lat'], coords[idx2]['lon'])
+            dist = haversine(coords[idx1]['lat'], coords[idx1]['lon'],
+                    coords[idx2]['lat'], coords[idx2]['lon'])
             distances[idx1, idx2] = dist
             distances[idx2, idx1] = dist
             counter += 1
             completion = 100*float(counter)/ncalls
-            print('Calculating distance matrix: {:.2f}%'.format(completion), end='\r')
-    print('Calculating distance matrix: {:.2f}%'.format(completion))
+            if verbose: print('Calculating distance matrix: {:.2f}%'.format(completion), end='\r')
+    if verbose: print('Calculating distance matrix: {:.2f}%'.format(completion))
     return distances
 
 

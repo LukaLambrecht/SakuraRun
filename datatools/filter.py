@@ -109,8 +109,9 @@ if __name__=='__main__':
     
         # filter on tree type
         if treetype_filter is not None:
+            print('Performing filtering based on tree type...')
             dataset = treetype_filter.filter_df(dataset, args.treetype_key)
-        print('Number of entries after tree type filter: {}'.format(len(dataset)))
+            print('Number of entries after tree type filter: {}'.format(len(dataset)))
     
     if args.location_key is not None:
 
@@ -124,8 +125,9 @@ if __name__=='__main__':
     
         # filter on location
         if location_filter is not None:
+            print('Performing filtering based on location...')
             dataset = location_filter.filter_df(dataset, args.location_key)
-        print('Number of entries after location filter: {}'.format(len(dataset)))
+            print('Number of entries after location filter: {}'.format(len(dataset)))
 
     # write filtered dataset
     if args.outputfile is not None:
