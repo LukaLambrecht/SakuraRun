@@ -41,8 +41,8 @@ def cluster_streets(df, street_key, num_key=None, lat_key=None, lon_key=None):
 
     # combine cluster centers in a dataframe and return
     centers = pd.concat(centers, ignore_index=True)
-    drop = [c for c in centers.columns if c.startswith('Unnamed:')]
-    centers.drop(columns=drop, inplace=True)
+    #drop = [c for c in centers.columns if c.lower().startswith('unnamed')]
+    #centers.drop(columns=drop, inplace=True)
     return centers
 
 
@@ -81,4 +81,4 @@ if __name__=='__main__':
 
     # write output file
     if args.outputfile is not None:
-        centers.to_csv(args.outputfile, sep=args.delimiter)
+        centers.to_csv(args.outputfile, sep=args.delimiter, index=False)

@@ -126,6 +126,7 @@ if __name__=='__main__':
         if location_filter is not None:
             dataset = location_filter.filter_df(dataset, args.location_key)
         print('Number of entries after location filter: {}'.format(len(dataset)))
-    
+
     # write filtered dataset
-    if args.outputfile is not None: dataset.to_csv(args.outputfile, sep=args.delimiter)
+    if args.outputfile is not None:
+        dataset.to_csv(args.outputfile, sep=args.delimiter, index=False)

@@ -47,4 +47,4 @@ if __name__=='__main__':
 
     # write output file
     if args.outputfile is not None:
-        dataset.to_csv(args.outputfile, sep=args.delimiter)
+        dataset.to_csv(args.outputfile, sep=args.delimiter, index=False)
