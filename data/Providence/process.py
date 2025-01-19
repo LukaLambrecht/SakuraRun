@@ -18,6 +18,7 @@ if __name__=='__main__':
     outputfile = 'data-providence-{}.csv'
     treetype_key = 'Species'
     treetype_filter = os.path.abspath(os.path.join(thisdir, 'filters/treetype_filter.json'))
+    max_cluster_distance = 100
 
     # filter
     filtered = 'temp-1.csv'
@@ -26,6 +27,7 @@ if __name__=='__main__':
     cmd += f' -o {filtered}'
     cmd += f' --treetype_key {treetype_key}'
     cmd += f' --treetype_filter {treetype_filter}'
+    print('--- Running filtering ---')
     os.system(cmd)
 
     # parse
@@ -33,6 +35,7 @@ if __name__=='__main__':
     cmd = 'python3 parse.py'
     cmd += f' -i {filtered}'
     cmd += f' -o {parsed}'
+    print('--- Running parsing ---')
     os.system(cmd)
 
     # select square
@@ -41,7 +44,9 @@ if __name__=='__main__':
     cmd += f' -i {parsed}'
     cmd += f' -o {selected}'
     cmd += ' --lat_min {}'.format(41.813)
+    cmd += ' --lat_max {}'.format(41.839)
     cmd += ' --lon_min {}'.format(-71.408)
+    print('--- Running square selection ---')
     os.system(cmd)
 
     # cluster
@@ -49,9 +54,12 @@ if __name__=='__main__':
     cmd = 'python3 ' + os.path.join(datatoolsdir, 'cluster_streets.py')
     cmd += f' -i {selected}'
     cmd += f' -o {clustered}'
+    cmd += f' --max_distance {max_cluster_distance}'
+    print('--- Running clustering ---')
     os.system(cmd)
 
     # plotting
+    print('--- Running plotting ---')
     cmd = 'python3 ' + os.path.join(datatoolsdir, 'plot_locations.py')
     cmd += f' -i {parsed}'
     os.system(cmd)
