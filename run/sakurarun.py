@@ -51,14 +51,20 @@ if __name__=='__main__':
             help='Block size for distance matrix calculation, must be None'
                 +' or an integer between 2 and the number of points in the input file;'
                 +' use a value <= 5 for compatibility with a free GraphHopper account.')
+    parser.add_argument('--plot_distance_matrix', default=False, action='store_true',
+            help='Make plot of distance matrix.')
     parser.add_argument('--geodesic_distance_matrix', default=False, action='store_true',
             help='Use a simple geodesic distance matrix instead of a fully accurate one.')
+    parser.add_argument('--kmeans_distance_matrix', default=False, action='store_true',
+            help='Use k-means clustering before distance matrix computation.')
+    parser.add_argument('--plot_tsp', default=False, action='store_true',
+            help='Make plot shortest route solution.')
     parser.add_argument('--chunksize', default=None,
             help='Chunk size for route calculation, must be None'
                 +' or an integer between 2 and the number of points in the input file;'
                 +' use a value <= 5 for compatibility with a free GraphHopper account.')
-    parser.add_argument('--doplot', default=False, action='store_true',
-            help='Make plots of distance matrix and final optimal route.')
+    parser.add_argument('--plot_route', default=False, action='store_true',
+            help='Make plot of final optimal route.')
     args = parser.parse_args()
 
     # format blocksize argument
@@ -84,8 +90,11 @@ if __name__=='__main__':
     sys.stdout.flush()
     distances = get_distance_matrix(coords,
             session=session, profile=args.profile, blocksize=args.blocksize,
-            geodesic=args.geodesic_distance_matrix)
-    if args.doplot:
+            geodesic=args.geodesic_distance_matrix,
+            kmeans=args.kmeans_distance_matrix)
+
+    # plot distance matrix
+    if args.plot_distance_matrix:
         print('Plotting distance matrix...')
         sys.stdout.flush()
         plot_distance_matrix(coords, distances=distances)
@@ -94,9 +103,16 @@ if __name__=='__main__':
     print('Finding shortest path...')
     sys.stdout.flush()
     (ids, dist) = solve_tsp(distances, method='local')
-    coords = [coords[idx] for idx in ids]
     print('Shortest path: {:.3f} km'.format(dist/1000))
     sys.stdout.flush()
+
+    # re-index coords and distances
+    coords = [coords[idx] for idx in ids]
+    new_distances = np.copy(distances)
+    for i in range(distances.shape[0]):
+        for j in range(distances.shape[1]):
+            new_distances[i,j] = distances[ids[i], ids[j]]
+    distances = new_distances
 
     # cross-check with other heuristic methods
     check_methods = ['annealing']
@@ -109,7 +125,10 @@ if __name__=='__main__':
                 msg += ' in cross-check with method "{}"'.format(method)
                 print(msg)
 
-    sys.exit()
+    # plot shortest route solution
+    if args.plot_tsp:
+        print('Plotting shortest route solution...')
+        plot_distance_matrix(coords, distances=distances, mode='route')
 
     # calculate route
     print('Calculating route details...')
@@ -118,7 +137,7 @@ if __name__=='__main__':
     
     # print some info and make plot
     print('Total distance: {:.3f} km'.format(route_info['distance']/1000))
-    if args.doplot: plot_route_coords(coords, route_coords=route_coords)
+    if args.plot_route: plot_route_coords(coords, route_coords=route_coords)
 
     # write output KML file (e.g. for use in google maps)
     kmlcontent = coords_to_kml(route_coords)
