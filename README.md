@@ -39,3 +39,11 @@ The result is 33.229 km... Perhaps some more filtering is required...
 
 ### Integration into Google MyMaps
 The `csv` files holding the filtered and clustered trees, and the final route in the form of a `kml` file, can be uploaded in Google MyMaps to create an [interactive view of the route](https://www.google.com/maps/d/edit?mid=1Lkx6-XZd_MD3Z8j-vJb9ecLbSvxTnj4&usp=sharing).
+
+### Other results
+This repo was originally developed for a sakura appreciation run in Ghent (Belgium), but it can be extended to any other place.
+The only condition is the existence of a database with tree locations...
+
+Currently, results have been obtained for:
+- [Providence](https://github.com/LukaLambrecht/SakuraRun/tree/main/data/Providence) (RI, USA)
+- [Boston](https://github.com/LukaLambrecht/SakuraRun/tree/main/data/Boston) (MA, USA) (to be updated)
