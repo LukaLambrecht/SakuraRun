@@ -1,9 +1,13 @@
-# Calculate the optimal path for a sakura appreciation run
+# Optimal path calculator for a sakura appreciation run
 
 The blossoming of the Japanese cherry flower (Jap. *sakura*, Lat. *Prunus serrulata*) is quite a sight to behold.
-In fact, it is so beautiful that we wanted to see *all* of them. 
-And though we're always in for a good run, there's *many* cherry trees in and around the city of Ghent... 
-So how do we go about this? SakuraRun to the rescue!
+In fact, it is so beautiful that we wanted to see *all* of them.
+And though we're always in for a good run, there's *many* cherry trees in and around the city of Ghent...
+
+The problem boils down to the following: what is the shortest route that links all the *sakura* trees in Ghent?
+Or in other words, what is the path with maximal *sakura* appreciation value versus minimal distance to run?
+A non-trivial problem...
+Fortunately, there is SakuraRun to the rescue!
 
 ![](https://www.morethantokyo.com/wp-content/uploads/2022/03/cherry-blossoms-g5dd367977_1920-830x552.jpg)
 
@@ -38,7 +42,7 @@ The result is 33.229 km... Perhaps some more filtering is required...
 ![](docs/route.png)
 
 ### Integration into Google MyMaps
-The `csv` files holding the filtered and clustered trees, and the final route in the form of a `kml` file, can be uploaded in Google MyMaps to create an [interactive view of the route](https://www.google.com/maps/d/edit?mid=1Lkx6-XZd_MD3Z8j-vJb9ecLbSvxTnj4&usp=sharing).
+The `csv` files holding the filtered and clustered trees, and the final route in the form of a `kml` file, can be uploaded in Google MyMaps to create an [interactive view of the route](https://www.google.com/maps/d/edit?mid=1Lkx6-XZd_MD3Z8j-vJb9ecLbSvxTnj4&usp=sharing). This map also contains a more reasonable route of about 12 km, obtained by filtering a subset of the *sakura* clusters in the southern part of the city (Gent-Sint-Pieters - Citadelpark - Watersportbaan).
 
 ### Other results
 This repo was originally developed for a sakura appreciation run in Ghent (Belgium), but it can be extended to any other place.
