@@ -49,6 +49,70 @@ class Filter(object):
         if self.select is not None: res = res[res[key].isin(self.select)]
         if self.veto is not None: res = res[~res[key].isin(self.veto)]
         return res
+    
+    
+def filter_dataset(dataset,
+           treetype_key=None, print_treetypes=False, treetype_filter=None,
+           location_key=None, print_locations=False, location_filter=None):
+    # main function
+    
+    # parse treetype filter
+    if treetype_filter is not None:
+        if isinstance(treetype_filter, str):
+            treetype_filter = os.path.abspath(treetype_filter)
+            if not os.path.exists(treetype_filter):
+                raise Exception('treetype_filter {} does not exist.'.format(treetype_filter))
+            treetype_filter = Filter.from_json(treetype_filter)
+        if not isinstance(treetype_filter, Filter):
+            raise Exception('treetype_filter is of unrecognized type {}.'.format(treetype_filter))
+        print('Read treetype filter:')
+        print(treetype_filter)
+
+    # parse location filter
+    if location_filter is not None:
+        if isinstance(location_filter, str):
+            location_filter = os.path.abspath(location_filter)
+            if not os.path.exists(location_filter):
+                raise Exception('location_filter {} does not exist.'.format(location_filter))
+            location_filter = Filter.from_json(location_filter)
+        if not isinstance(location_filter, Filter):
+            raise Exception('location_filter is of unrecognized type {}.'.format(location_filter))
+        print('Read location filter:')
+        print(location_filter)
+        
+    if treetype_key is not None:
+
+        # print tree types
+        treetypes = list(set(dataset[treetype_key]))
+        treetypes = [el for el in treetypes if isinstance(el, str)]
+        treetypes = sorted(treetypes)
+        if print_treetypes:
+            print('Available tree types:')
+            for treetype in treetypes: print('  - {}'.format(treetype))
+    
+        # filter on tree type
+        if treetype_filter is not None:
+            print('Performing filtering based on tree type...')
+            dataset = treetype_filter.filter_df(dataset, treetype_key)
+            print('Number of entries after tree type filter: {}'.format(len(dataset)))
+    
+    if location_key is not None:
+
+        # print locations
+        locations = list(set(dataset[location_key]))
+        locations = [el for el in locations if isinstance(el, str)]
+        locations = sorted(locations)
+        if print_locations:
+            print('Available locations:')
+            for location in locations: print('  - {}'.format(location))
+    
+        # filter on location
+        if location_filter is not None:
+            print('Performing filtering based on location...')
+            dataset = location_filter.filter_df(dataset, location_key)
+            print('Number of entries after location filter: {}'.format(len(dataset)))
+            
+    return dataset
 
 
 if __name__=='__main__':
@@ -68,26 +132,6 @@ if __name__=='__main__':
     print('Running with following configuration:')
     for arg in vars(args): print(f'  - {arg}: {getattr(args, arg)}')
 
-    # parse treetype filter
-    treetype_filter = args.treetype_filter
-    if args.treetype_filter is not None:
-        args.treetype_filter = os.path.abspath(args.treetype_filter)
-        if not os.path.exists(args.treetype_filter):
-            raise Exception('treetype_filter {} does not exist.'.format(args.treetype_filter))
-        treetype_filter = Filter.from_json(args.treetype_filter)
-        print('Read treetype filter:')
-        print(treetype_filter)
-
-    # parse location filter
-    location_filter = args.location_filter
-    if args.location_filter is not None:
-        args.location_filter = os.path.abspath(args.location_filter)
-        if not os.path.exists(args.location_filter):
-            raise Exception('location_filter {} does not exist.'.format(args.location_filter))
-        location_filter = Filter.from_json(args.location_filter)
-        print('Read location filter:')
-        print(location_filter)
-
     # load input file
     dataset = pd.read_csv(args.inputfile, sep=args.delimiter)
     print('Loaded dataset {}'.format(args.inputfile))
@@ -97,37 +141,10 @@ if __name__=='__main__':
     print('Column names:')
     print(dataset.columns)
 
-    if args.treetype_key is not None:
-
-        # print tree types
-        treetypes = list(set(dataset[args.treetype_key]))
-        treetypes = [el for el in treetypes if isinstance(el, str)]
-        treetypes = sorted(treetypes)
-        if args.print_treetypes:
-            print('Available tree types:')
-            for treetype in treetypes: print('  - {}'.format(treetype))
-    
-        # filter on tree type
-        if treetype_filter is not None:
-            print('Performing filtering based on tree type...')
-            dataset = treetype_filter.filter_df(dataset, args.treetype_key)
-            print('Number of entries after tree type filter: {}'.format(len(dataset)))
-    
-    if args.location_key is not None:
-
-        # print locations
-        locations = list(set(dataset[args.location_key]))
-        locations = [el for el in locations if isinstance(el, str)]
-        locations = sorted(locations)
-        if args.print_locations:
-            print('Available locations:')
-            for location in locations: print('  - {}'.format(location))
-    
-        # filter on location
-        if location_filter is not None:
-            print('Performing filtering based on location...')
-            dataset = location_filter.filter_df(dataset, args.location_key)
-            print('Number of entries after location filter: {}'.format(len(dataset)))
+    # do filtering
+    filtered_dataset = filter_dataset(dataset,
+      treetype_key=args.treetype_key, print_treetypes=args.print_treetypes, treetype_filter=args.treetype_filter,
+      location_key=args.location_key, print_locations=args.print_locations, location_filter=args.location_filter)
 
     # write filtered dataset
     if args.outputfile is not None:

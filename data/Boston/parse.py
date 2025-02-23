@@ -7,9 +7,30 @@ import os
 import sys
 import argparse
 import pandas as pd
-import numpy as np
 
 
+def parse_dataset(dataset, dtype=None):
+    # main function
+    
+    # rename columns
+    rename = {
+      'spp_bot': 'treetype',
+      'y_latitude': 'lat',
+      'x_longitude': 'lon'
+    }
+    if dtype=='street': rename['street'] = 'street'
+    elif dtype=='parks': rename['park'] = 'street'
+    else: raise Exception('dtype {} not recognized.'.format(dtype))
+    dataset.rename(columns=rename, inplace=True)
+
+    # remove unneeded columns
+    keep = list(rename.values())
+    drop = [c for c in dataset.columns if c not in keep]
+    dataset.drop(columns=drop, inplace=True)
+
+    return dataset
+
+        
 if __name__=='__main__':
 
     # read command line arguments
@@ -30,20 +51,8 @@ if __name__=='__main__':
     print('Column names:')
     print(dataset.columns)
 
-    # rename columns
-    rename = {
-      'spp_bot': 'treetype',
-      'y_latitude': 'lat',
-      'x_longitude': 'lon'
-    }
-    if args.dtype=='street': rename['street'] = 'street'
-    elif args.dtype=='parks': rename['park'] = 'street'
-    dataset.rename(columns=rename, inplace=True)
-
-    # remove unneeded columns
-    keep = list(rename.values())
-    drop = [c for c in dataset.columns if c not in keep]
-    dataset.drop(columns=drop, inplace=True)
+    # do parsing
+    dataset = parse_dataset(dataset, dtype=args.dtype)
 
     # write to output file
     if args.outputfile is not None:

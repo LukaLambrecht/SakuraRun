@@ -7,7 +7,17 @@ import os
 import sys
 import argparse
 import pandas as pd
-import numpy as np
+
+
+def select_square(dataset,
+                  lat_key=None, lat_min=None, lat_max=None,
+                  lon_key=None, lon_min=None, lon_max=None):
+    # main function
+    if lat_min is not None: dataset = dataset[dataset[lat_key] > float(lat_min)]
+    if lat_max is not None: dataset = dataset[dataset[lat_key] < float(lat_max)]
+    if lon_min is not None: dataset = dataset[dataset[lon_key] > float(lon_min)]
+    if lon_max is not None: dataset = dataset[dataset[lon_key] < float(lon_max)]
+    return dataset
 
 
 if __name__=='__main__':
@@ -37,10 +47,9 @@ if __name__=='__main__':
     print(dataset.columns)
 
     # do selections
-    if args.lat_min is not None: dataset = dataset[dataset[args.lat_key] > float(args.lat_min)]
-    if args.lat_max is not None: dataset = dataset[dataset[args.lat_key] < float(args.lat_max)]
-    if args.lon_min is not None: dataset = dataset[dataset[args.lon_key] > float(args.lon_min)]
-    if args.lon_max is not None: dataset = dataset[dataset[args.lon_key] < float(args.lon_max)]
+    dataset = select_square(dataset,
+                          lat_key=args.lat_key, lat_min=args.lat_min, lat_max=args.lat_max,
+                          lon_key=args.lon_key, lon_min=args.lon_min, lon_max=args.lon_max)
 
     # do printout
     print('Selected {} entries'.format(len(dataset)))
