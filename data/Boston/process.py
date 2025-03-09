@@ -15,7 +15,7 @@ sys.path.append(topdir)
 
 from datatools.filter import filter_dataset
 from datatools.select_square import select_square
-#from datatools.cluster_streets import cluster_streets
+from datatools.cluster_streets import cluster_streets
 from datatools.plot_locations import plot_locations
 from data.Boston.parse import parse_dataset
 
@@ -64,16 +64,17 @@ if __name__=='__main__':
     selected_df.to_csv(selected, sep=',', index=False)
 
     # cluster
-    #clustered = 'temp-4.csv'
-    #df = pd.read_csv(selected, sep=',')
-    #clustered_df = cluster_streets(df)
-    #clustered_df.to_csv(clustered, sep=',', index=False)
+    clustered = 'temp-4.csv'
+    df = pd.read_csv(selected, sep=',')
+    clustered_df = cluster_streets(df, 'street')
+    clustered_df.to_csv(clustered, sep=',', index=False)
 
     # plotting
     plot_locations(combined_df['lat'], combined_df['lon'])
-    #plot_locations(clustered_df['lat'], clustered_df['lon'])
+    plot_locations(selected_df['lat'], selected_df['lon'])
+    plot_locations(clustered_df['lat'], clustered_df['lon'])
 
     # output handling
-    #os.system(f'cp {clustered} {outputfile.format("processed")}')
-    #os.system(f'cp {selected} {outputfile.format("filtered-selected")}')
+    os.system(f'cp {clustered} {outputfile.format("processed")}')
+    os.system(f'cp {selected} {outputfile.format("filtered-selected")}')
     os.system('rm *temp*.csv')

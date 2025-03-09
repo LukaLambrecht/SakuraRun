@@ -73,10 +73,10 @@ def cluster_streets(df, street_key, num_key=None, lat_key=None, lon_key=None, ma
 
     # split the data based on street name
     print('Performing clustering by street name...')
-    streets = sorted(list(set(dataset[street_key])))
+    streets = sorted(list(set(df[street_key])))
     datasets = []
     for street in streets:
-        part = dataset[dataset[street_key]==street]
+        part = df[df[street_key]==street]
         datasets.append(part)
     print('Found {} clusters based on street name'.format(len(datasets)))
 
