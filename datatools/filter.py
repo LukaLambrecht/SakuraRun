@@ -148,4 +148,4 @@ if __name__=='__main__':
 
     # write filtered dataset
     if args.outputfile is not None:
-        dataset.to_csv(args.outputfile, sep=args.delimiter, index=False)
+        filtered_dataset.to_csv(args.outputfile, sep=args.delimiter, index=False)
