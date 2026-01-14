@@ -70,4 +70,4 @@ if __name__=='__main__':
     # output handling
     os.system(f'cp {clustered} {outputfile.format("processed")}')
     os.system(f'cp {selected} {outputfile.format("filtered-selected")}')
-    os.system('rm *temp*.csv')
+    #os.system('rm *temp*.csv')

@@ -17,6 +17,7 @@ sys.path.append(os.path.abspath(os.path.join(thisdir, '..')))
 
 # local imports
 from python.distancematrix import get_geodesic_distance_matrix
+from datatools.cluster_dataset import cluster_parts
 
 
 def split_cluster(coords, distances=None, max_distance=None, cids=None):
@@ -107,26 +108,8 @@ def cluster_streets(df, street_key, num_key=None, lat_key=None, lon_key=None, ma
         datasets = newparts
         print(f'Splitting resulted in {len(datasets)} clusters.')
 
-    # cluster each part
-    centers = []
-    print(f'Clustering {len(datasets)} clusters...')
-    for part in datasets:
-        # copy first element of cluster
-        center = part.iloc[[0]].copy()
-        # average coordinates over cluster
-        if lat_key is not None and lon_key is not None:
-            lat_avg = np.average(part[lat_key])
-            lon_avg = np.average(part[lon_key])
-            center[lat_key] = lat_avg
-            center[lon_key] = lon_avg
-        # store number of trees clustered
-        if num_key is not None:
-            center[num_key] = len(part)
-        centers.append(center)
-    print('Done.')
-
-    # combine cluster centers in a dataframe and return
-    centers = pd.concat(centers, ignore_index=True)
+    # make the cluster centers
+    centers = cluster_parts(datasets, lat_key=lat_key, lon_key=lon_key, num_key=num_key)
     return centers
 
 

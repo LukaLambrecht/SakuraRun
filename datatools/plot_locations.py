@@ -12,7 +12,7 @@ import pandas as pd
 import plotly.express as px
 
 
-def plot_locations(lat, lon):
+def plot_locations(lat, lon, extra_info=None):
     # make a visual representation of a set of coordinates
     # input arguments:
     # - lat and lon: 1D numpy arrays with latitudes and longitudes
@@ -23,10 +23,18 @@ def plot_locations(lat, lon):
     df_coords['lon'] = lon
     df_coords['color'] = 'red'
     df_coords['size'] = 1
+    if extra_info is not None:
+        for key, val in extra_info.items():
+            df_coords[key] = val
+
+    # define what to display on hovering
+    hover_data = {'size':False, 'color':False, 'lat':True, 'lon':True}
+    if extra_info is not None:
+        for key in extra_info.keys(): hover_data[key] = True
     
     # plot the coordinates on map
     fig = px.scatter_mapbox(df_coords, lat="lat", lon="lon",
-                hover_data={'size':False, 'color':False, 'lat':True, 'lon':True},
+                hover_data=hover_data,
                 color='color', color_discrete_map='identity',
                 size='size', size_max=10,
                 zoom=8, height=600, width=900)
@@ -44,6 +52,7 @@ if __name__=='__main__':
     parser.add_argument('--limit', default=500, type=int)
     parser.add_argument('--lat_key', default='lat')
     parser.add_argument('--lon_key', default='lon')
+    parser.add_argument('--num_key', default=None)
     args = parser.parse_args()
 
     # load input file
@@ -62,5 +71,9 @@ if __name__=='__main__':
     lat = dataset[args.lat_key]
     lon = dataset[args.lon_key]
 
+    # get extra info
+    extra_info = {}
+    if args.num_key is not None: extra_info[args.num_key] = dataset[args.num_key]
+
     # make a plot
-    plot_locations(lat, lon)
+    plot_locations(lat, lon, extra_info=extra_info)
