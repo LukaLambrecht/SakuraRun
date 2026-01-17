@@ -7,55 +7,71 @@
 
 import os
 import sys
+import pandas as pd
+
+# set path for local imports
+thisdir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.abspath(os.path.join(thisdir, '../..')))
+
+# local imports
+from datatools.filtering.filter import filter_dataset
+from datatools.clustering.cluster_categorical import cluster_categorical
+from datatools.parsing.parse import parse
+from tools.plottools import plot_locations
+
+# local parsing import
+from parse import parse_coords
 
 
 if __name__=='__main__':
 
     # settings
     thisdir = os.path.dirname(os.path.abspath(__file__))
-    datatoolsdir = os.path.abspath(os.path.join(thisdir, '../../datatools'))
     inputfile = os.path.abspath(os.path.join(thisdir, 'raw/locaties-bomen-gent-full.csv'))
+    sep = ';'
     outputfile = 'data-gent-{}.csv'
-    treetype_key = 'sortiment'
-    treetype_filter = os.path.abspath(os.path.join(thisdir, 'filters/treetype_filter.json'))
-    location_key = 'onderhoudsgebied'
-    location_filter = os.path.abspath(os.path.join(thisdir, 'filters/location_filter.json'))
+    filters = [
+      os.path.abspath(os.path.join(thisdir, 'filters/treetype_filter.json')),
+      os.path.abspath(os.path.join(thisdir, 'filters/location_filter.json'))
+    ]
+    rename = {
+      'sortiment': 'type',
+      'straatnaam': 'street',
+      'onderhoudsgebied': 'area'
+    }
+
+    # load input file
+    dataset = pd.read_csv(inputfile, sep=sep)
+    print('Loaded dataset {}'.format(inputfile))
+    print('Number of entries: {}'.format(len(dataset)))
+    print('Column names:')
+    print(dataset.columns.values)
 
     # filter
-    filtered = 'temp-1.csv'
-    cmd = 'python3 ' + os.path.join(datatoolsdir, 'filter.py')
-    cmd += f' -i {inputfile}'
-    cmd += f' -o {filtered}'
-    cmd += ' --delimiter \';\''
-    cmd += f' --treetype_key {treetype_key}'
-    cmd += f' --treetype_filter {treetype_filter}'
-    cmd += f' --location_key {location_key}'
-    cmd += f' --location_filter {location_filter}'
-    os.system(cmd)
+    dataset_filtered = filter_dataset(dataset, filters, verbose=True)
 
     # parse
-    parsed = 'temp-2.csv'
-    cmd = 'python3 parse.py'
-    cmd += f' -i {filtered}'
-    cmd += f' -o {parsed}'
-    os.system(cmd)
+    dataset_filtered = parse_coords(dataset_filtered)
+    dataset_filtered = parse(dataset_filtered, rename=rename)
 
     # cluster
-    clustered = 'temp-3.csv'
-    cmd = 'python3 ' + os.path.join(datatoolsdir, 'cluster_streets.py')
-    cmd += f' -i {parsed}'
-    cmd += f' -o {clustered}'
-    os.system(cmd)
+    dataset_clustered = cluster_categorical(dataset_filtered,
+            column_names=['street'], num_key='num', verbose=True)
 
-    # plotting
-    cmd = 'python3 ' + os.path.join(datatoolsdir, 'plot_locations.py')
-    cmd += f' -i {parsed}'
-    os.system(cmd)
-    cmd = 'python3 ' + os.path.join(datatoolsdir, 'plot_locations.py')
-    cmd += f' -i {clustered}'
-    os.system(cmd)
+    # plotting (filtered)
+    lat = dataset_filtered['lat']
+    lon = dataset_filtered['lon']
+    extra_info = {}
+    for key, val in dataset_filtered.items(): extra_info[key] = val.values
+    plot_locations(lat, lon, extra_info=extra_info)
 
-    # output handling
-    os.system(f'cp {clustered} {outputfile.format("processed")}')
-    os.system(f'cp {parsed} {outputfile.format("filtered")}')
-    os.system('rm *temp*.csv')
+    # plotting (clustered)
+    lat = dataset_clustered['lat']
+    lon = dataset_clustered['lon']
+    extra_info = {}
+    for key, val in dataset_clustered.items(): extra_info[key] = val.values
+    plot_locations(lat, lon, extra_info=extra_info)
+
+    # save output files
+    dataset_filtered.to_csv(outputfile.format('filtered'), index=False)
+    dataset_clustered.to_csv(outputfile.format('clustered'), index=False)

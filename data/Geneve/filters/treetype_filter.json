@@ -1,4 +1,5 @@
 {
+  "column_name": "NOM_COMPLET",
   "select": [
     "Prunus serrula",
     "Prunus serrulata",

@@ -41,39 +41,3 @@ def plot_locations(lat, lon, extra_info=None):
     fig.update_layout(mapbox_style="open-street-map")
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
     fig.show()
-
-
-if __name__=='__main__':
-
-    # read command line arguments
-    parser = argparse.ArgumentParser(description='Plot locations of entries in a csv file')
-    parser.add_argument('-i', '--inputfile', type=os.path.abspath)
-    parser.add_argument('--delimiter', default=',')
-    parser.add_argument('--limit', default=500, type=int)
-    parser.add_argument('--lat_key', default='lat')
-    parser.add_argument('--lon_key', default='lon')
-    parser.add_argument('--num_key', default=None)
-    args = parser.parse_args()
-
-    # load input file
-    dataset = pd.read_csv(args.inputfile, sep=args.delimiter)
-    print('Loaded dataset {}'.format(args.inputfile))
-    print('Number of entries: {}'.format(len(dataset)))
-    print('Column names:')
-    print(dataset.columns)
-
-    # check if maximum length is not exceeded
-    if len(dataset)>args.limit:
-        msg = 'ERROR: number of entries exceeds limit ({})'.format(args.limit)
-        raise Exception(msg)
-
-    # get coordinates
-    lat = dataset[args.lat_key]
-    lon = dataset[args.lon_key]
-
-    # get extra info
-    extra_info = {}
-    if args.num_key is not None: extra_info[args.num_key] = dataset[args.num_key]
-
-    # make a plot
-    plot_locations(lat, lon, extra_info=extra_info)

@@ -9,15 +9,16 @@ import os
 import sys
 import pandas as pd
 
+# set path for local imports
 thisdir = os.path.dirname(os.path.abspath(__file__))
-topdir = os.path.abspath(os.path.join(thisdir, '../../'))
-sys.path.append(topdir)
+sys.path.append(os.path.abspath(os.path.join(thisdir, '../..')))
 
-from datatools.filter import filter_dataset
-from datatools.select_square import select_square
-from datatools.cluster_streets import cluster_streets
-from datatools.plot_locations import plot_locations
-from data.Boston.parse import parse_dataset
+# local imports
+from datatools.filtering.filter import filter_dataset
+from datatools.clustering.cluster_categorical import cluster_categorical
+from datatools.parsing.parse import parse
+from datatools.selection.select_square import select_square
+from tools.plottools import plot_locations
 
 
 if __name__=='__main__':
@@ -29,52 +30,56 @@ if __name__=='__main__':
     }
     outputfile = 'data-boston-{}.csv'
     treetype_key = 'spp_bot'
-    treetype_filter = os.path.abspath(os.path.join(thisdir, 'filters/treetype_filter.json'))
+    rename = {
+      'spp_bot': 'treetype',
+      'y_latitude': 'lat',
+      'x_longitude': 'lon',
+      'street': 'street',
+      'park': 'street'
+    }
+    filters = [
+      os.path.abspath(os.path.join(thisdir, 'filters/treetype_filter.json'))
+    ]
 
+    # load input files
+    datasets = []
     for dtype, inputfile in inputfiles.items():
-    
+        
+        dataset = pd.read_csv(inputfile)
+        print('Loaded dataset {}'.format(inputfile))
+        print('Number of entries: {}'.format(len(dataset)))
+        print('Column names:')
+        print(dataset.columns.values)
+
         # filter
-        filtered = f'temp-1-{dtype}.csv'
-        df = pd.read_csv(inputfile, sep=',')
-        filtered_df = filter_dataset(df,
-          treetype_key=treetype_key, treetype_filter=treetype_filter)
-        filtered_df.to_csv(filtered, sep=',', index=False)
-    
+        dataset_filtered = filter_dataset(dataset, filters, verbose=True)
+
         # parse
-        parsed = f'temp-2-{dtype}.csv'
-        df = pd.read_csv(filtered, sep=',')
-        parsed_df = parse_dataset(df, dtype=dtype)
-        parsed_df.to_csv(parsed, sep=',', index=False)
+        dataset_filtered = parse(dataset_filtered, rename=rename)
+        datasets.append(dataset_filtered)
 
-    # add together
-    dfs = []
-    for dtype in inputfiles.keys():
-        df = pd.read_csv(f'temp-2-{dtype}.csv', sep=',')
-        dfs.append(df)
-    combined_df = pd.concat(dfs, ignore_index=True)
-    drop = [c for c in combined_df.columns if c.startswith('Unnamed:')]
-    combined_df.drop(columns=drop, inplace=True)
-    combined = 'temp-2.csv'
-    combined_df.to_csv(combined, sep=',')
-
-    # select square
-    selected = 'temp-3.csv'
-    df = pd.read_csv(combined, sep=',')
-    selected_df = select_square(df)
-    selected_df.to_csv(selected, sep=',', index=False)
+    # merge
+    dataset_filtered = pd.concat(datasets, ignore_index=True)
 
     # cluster
-    clustered = 'temp-4.csv'
-    df = pd.read_csv(selected, sep=',')
-    clustered_df = cluster_streets(df, 'street')
-    clustered_df.to_csv(clustered, sep=',', index=False)
+    dataset_clustered = cluster_categorical(dataset_filtered,
+            column_names=['street'], num_key='num',
+            verbose=True)
 
-    # plotting
-    plot_locations(combined_df['lat'], combined_df['lon'])
-    plot_locations(selected_df['lat'], selected_df['lon'])
-    plot_locations(clustered_df['lat'], clustered_df['lon'])
+    # plotting (filtered)
+    lat = dataset_filtered['lat']
+    lon = dataset_filtered['lon']
+    extra_info = {}
+    for key, val in dataset_filtered.items(): extra_info[key] = val.values
+    plot_locations(lat, lon, extra_info=extra_info)
 
-    # output handling
-    os.system(f'cp {clustered} {outputfile.format("processed")}')
-    os.system(f'cp {selected} {outputfile.format("filtered-selected")}')
-    os.system('rm *temp*.csv')
+    # plotting (clustered)
+    lat = dataset_clustered['lat']
+    lon = dataset_clustered['lon']
+    extra_info = {}
+    for key, val in dataset_clustered.items(): extra_info[key] = val.values
+    plot_locations(lat, lon, extra_info=extra_info)
+
+    # save output files
+    dataset_filtered.to_csv(outputfile.format('filtered'), index=False)
+    dataset_clustered.to_csv(outputfile.format('clustered'), index=False)

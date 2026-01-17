@@ -1,4 +1,5 @@
 {
+  "column_name": "sortiment",
   "select": [
     "Prunus serrulata",
     "Prunus serrulata 'Kanzan'",

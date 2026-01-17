@@ -11,12 +11,19 @@ import pandas as pd
 
 def select_square(dataset,
                   lat_key=None, lat_min=None, lat_max=None,
-                  lon_key=None, lon_min=None, lon_max=None):
+                  lon_key=None, lon_min=None, lon_max=None,
+                  verbose=False):
     # main function
+    if lat_key is None: lat_key = 'lat'
+    if lon_key is None: lon_key = 'lon'
+    norig = len(dataset)
     if lat_min is not None: dataset = dataset[dataset[lat_key] > float(lat_min)]
     if lat_max is not None: dataset = dataset[dataset[lat_key] < float(lat_max)]
     if lon_min is not None: dataset = dataset[dataset[lon_key] > float(lon_min)]
     if lon_max is not None: dataset = dataset[dataset[lon_key] < float(lon_max)]
+    nafter = len(dataset)
+    if verbose:
+        print(f'INFO in select_square: selected {nafter} out of {norig} instances.')
     return dataset
 
 
@@ -41,10 +48,8 @@ if __name__=='__main__':
     dataset = pd.read_csv(args.inputfile, sep=args.delimiter)
     print('Loaded dataset {}'.format(args.inputfile))
     print('Number of entries: {}'.format(len(dataset)))
-    #print('Dataset head:')
-    #print(dataset.head())
     print('Column names:')
-    print(dataset.columns)
+    print((dataset.columns.values))
 
     # do selections
     dataset = select_square(dataset,

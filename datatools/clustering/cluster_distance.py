@@ -8,7 +8,6 @@
 import os
 import sys
 import argparse
-import sklearn
 import pandas as pd
 import numpy as np
 
@@ -18,12 +17,13 @@ sys.path.append(os.path.abspath(os.path.join(thisdir, '..')))
 
 # local imports
 from python.distancematrix import get_geodesic_distance_matrix
-from datatools.cluster_dataset import cluster_by_label
+from datatools.clustering.clustertools import cluster_by_distance_threshold
+from datatools.clustering.cluster_dataset import cluster_by_indices
 
 
 def cluster_distance(dataset,
         lat_key='lat', lon_key='lon', num_key='num',
-        threshold_distance=1,
+        distance_threshold=1,
         verbose=False):
     
     # get coordinates in suitable format
@@ -31,23 +31,11 @@ def cluster_distance(dataset,
     lons = dataset[lon_key].astype(float)
     coords = [{'lon': lon, 'lat': lat} for lon, lat in zip(lons, lats)]
 
-    # get distance matrix and min/max distance between points
-    distance_matrix = get_geodesic_distance_matrix(coords)
-    dm_flat = distance_matrix.flatten()
-    min_distance = np.amin(dm_flat[np.nonzero(dm_flat)])
-    max_distance = np.amax(dm_flat)
-
-    # make and run clusterer
-    clusterer = sklearn.cluster.AgglomerativeClustering(
-                  n_clusters=None,
-                  distance_threshold=threshold_distance,
-                  metric='precomputed',
-                  linkage='complete')
-    clusterer.fit(distance_matrix)
-    cluster_labels = clusterer.labels_
+    # cluster by distance
+    cluster_indices = cluster_by_distance_threshold(coords, distance_threshold=distance_threshold)
 
     # cluster dataset
-    centers = cluster_by_label(dataset, cluster_labels, lat_key=lat_key, lon_key=lon_key, num_key=num_key)
+    centers = cluster_by_indices(dataset, cluster_indices, lat_key=lat_key, lon_key=lon_key, num_key=num_key)
 
     # printouts
     if verbose:
@@ -67,7 +55,7 @@ if __name__=='__main__':
     parser.add_argument('--lat_key', default='lat')
     parser.add_argument('--lon_key', default='lon')
     parser.add_argument('--num_key', default='num')
-    parser.add_argument('--threshold_distance', default=1, type=float)
+    parser.add_argument('--distance_threshold', default=1, type=float)
     args = parser.parse_args()
     print('Running with following configuration:')
     for arg in vars(args): print(f'  - {arg}: {getattr(args, arg)}')
@@ -76,8 +64,6 @@ if __name__=='__main__':
     dataset = pd.read_csv(args.inputfile, sep=args.delimiter)
     print('Loaded dataset {}'.format(args.inputfile))
     print('Number of entries: {}'.format(len(dataset)))
-    #print('Dataset head:')
-    #print(dataset.head())
     print('Column names:')
     print(dataset.columns)
 
@@ -87,7 +73,7 @@ if __name__=='__main__':
       lat_key=args.lat_key,
       lon_key=args.lon_key,
       num_key=args.num_key,
-      threshold_distance=args.threshold_distance,
+      distance_threshold=args.distance_threshold,
       verbose=True
     )
 

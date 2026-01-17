@@ -33,11 +33,16 @@ def cluster_parts(parts, **kwargs):
     centers = pd.concat(centers, ignore_index=True)
     return centers
 
-def cluster_by_label(dataset, cluster_labels, **kwargs):
+
+def cluster_by_indices(dataset, cluster_indices, **kwargs):
     parts = []
+    for indices in cluster_indices: parts.append(dataset.iloc[indices])
+    return cluster_parts(parts)
+
+
+def cluster_by_label(dataset, cluster_labels, **kwargs):
+    indices = []
     for label in np.unique(sorted(cluster_labels)):
         mask = (cluster_labels==label)
-        ids = np.nonzero(mask)
-        part = dataset.iloc[ids]
-        parts.append(part)
-    return cluster_parts(parts, **kwargs)
+        indices.append(np.nonzero(mask))
+    return cluster_by_indices(dataset, indices, **kwargs)
